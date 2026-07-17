@@ -23,7 +23,10 @@ interface AccountRowProps {
   isFirstRow: boolean;
   nameInputRef: RefObject<HTMLInputElement>;
   onToggleExpand: () => void;
-  onUpdate: (patch: Partial<Account>) => void;
+  /** Updates local UI state only — safe to call on every keystroke. */
+  onUpdateLocal: (patch: Partial<Account>) => void;
+  /** Persists a patch to Supabase — call for dropdowns immediately, text fields on blur. */
+  onCommitUpdate: (patch: Partial<Account>) => void;
   onAddNote: (text: string) => void;
   onRequestDelete: () => void;
   onCancelDelete: () => void;
@@ -32,8 +35,10 @@ interface AccountRowProps {
 
 /**
  * One agency's row in the table, plus its expandable detail section
- * (Agency Facts + Notes log). All state lives in the parent (AgencyCRM);
- * this component just receives values and callbacks as props.
+ * (Agency Facts + Notes log). Dropdown fields save to Supabase immediately
+ * on change; the free-text agency name and facts fields update the local
+ * UI on every keystroke but only save to Supabase on blur, so typing
+ * doesn't fire a database write per character.
  */
 export default function AccountRow({
   account,
@@ -42,7 +47,8 @@ export default function AccountRow({
   isFirstRow,
   nameInputRef,
   onToggleExpand,
-  onUpdate,
+  onUpdateLocal,
+  onCommitUpdate,
   onAddNote,
   onRequestDelete,
   onCancelDelete,
@@ -63,7 +69,8 @@ export default function AccountRow({
           <input
             ref={isFirstRow ? nameInputRef : undefined}
             value={a.agencyName}
-            onChange={(e) => onUpdate({ agencyName: e.target.value })}
+            onChange={(e) => onUpdateLocal({ agencyName: e.target.value })}
+            onBlur={() => onCommitUpdate({ agencyName: a.agencyName })}
             placeholder="Agency name..."
             className="text-sm font-medium bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-slate-400 outline-none px-1 py-0.5 rounded-sm w-full"
           />
@@ -73,7 +80,10 @@ export default function AccountRow({
           <Select
             value={a.priority}
             options={PRIORITIES}
-            onChange={(v) => onUpdate({ priority: v })}
+            onChange={(v) => {
+              onUpdateLocal({ priority: v });
+              onCommitUpdate({ priority: v });
+            }}
             styleMap={PRIORITY_STYLE}
           />
         </td>
@@ -82,7 +92,10 @@ export default function AccountRow({
           <Select
             value={a.status}
             options={STATUSES}
-            onChange={(v) => onUpdate({ status: v })}
+            onChange={(v) => {
+              onUpdateLocal({ status: v });
+              onCommitUpdate({ status: v });
+            }}
             styleMap={STATUS_STYLE}
           />
         </td>
@@ -91,7 +104,10 @@ export default function AccountRow({
           <Select
             value={a.relationship}
             options={RELATIONSHIPS}
-            onChange={(v) => onUpdate({ relationship: v })}
+            onChange={(v) => {
+              onUpdateLocal({ relationship: v });
+              onCommitUpdate({ relationship: v });
+            }}
             styleMap={REL_STYLE}
           />
         </td>
@@ -100,7 +116,10 @@ export default function AccountRow({
           <Select
             value={a.conflict}
             options={CONFLICTS}
-            onChange={(v) => onUpdate({ conflict: v })}
+            onChange={(v) => {
+              onUpdateLocal({ conflict: v });
+              onCommitUpdate({ conflict: v });
+            }}
             styleMap={CONFLICT_STYLE}
           />
         </td>
@@ -161,7 +180,8 @@ export default function AccountRow({
                   </div>
                   <textarea
                     value={a.facts}
-                    onChange={(e) => onUpdate({ facts: e.target.value })}
+                    onChange={(e) => onUpdateLocal({ facts: e.target.value })}
+                    onBlur={() => onCommitUpdate({ facts: a.facts })}
                     placeholder="Aggregated facts from public sources — budget, initiatives, funding cycles..."
                     rows={2}
                     className="w-full text-sm text-slate-600 bg-white border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"

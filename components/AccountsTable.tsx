@@ -10,7 +10,8 @@ interface AccountsTableProps {
   pendingDeleteId: string | null;
   nameInputRef: RefObject<HTMLInputElement>;
   onToggleExpand: (id: string) => void;
-  onUpdateAccount: (id: string, patch: Partial<Account>) => void;
+  onUpdateLocal: (id: string, patch: Partial<Account>) => void;
+  onCommitUpdate: (id: string, patch: Partial<Account>) => void;
   onAddNote: (id: string, text: string) => void;
   onRequestDelete: (id: string) => void;
   onCancelDelete: () => void;
@@ -27,7 +28,8 @@ export default function AccountsTable({
   pendingDeleteId,
   nameInputRef,
   onToggleExpand,
-  onUpdateAccount,
+  onUpdateLocal,
+  onCommitUpdate,
   onAddNote,
   onRequestDelete,
   onCancelDelete,
@@ -71,7 +73,8 @@ export default function AccountsTable({
                 isFirstRow={a.id === firstRowId}
                 nameInputRef={nameInputRef}
                 onToggleExpand={() => onToggleExpand(a.id)}
-                onUpdate={(patch) => onUpdateAccount(a.id, patch)}
+                onUpdateLocal={(patch) => onUpdateLocal(a.id, patch)}
+                onCommitUpdate={(patch) => onCommitUpdate(a.id, patch)}
                 onAddNote={(text) => onAddNote(a.id, text)}
                 onRequestDelete={() => onRequestDelete(a.id)}
                 onCancelDelete={onCancelDelete}

@@ -1,9 +1,37 @@
+import { createClient } from "@/lib/supabase/server";
+import { rowToAccount, rowToNote, AccountRow, AccountNoteRow } from "@/lib/mappers";
 import AgencyCRM from "@/components/AgencyCRM";
 
-// This file stays a server component (no "use client" needed) — it just
-// renders the interactive client component. When you're ready to load real
-// data from Supabase, fetch it here (accounts + their account_notes) and
-// pass it down: <AgencyCRM initialAccounts={data} />.
-export default function Page() {
-  return <AgencyCRM />;
+// Server component: fetches real accounts + their notes from Supabase
+// before the page renders, then hands them to the client component.
+export default async function Page() {
+  const supabase = await createClient();
+
+  const [{ data: accountRows, error: accountsError }, { data: noteRows, error: notesError }] =
+    await Promise.all([
+      supabase.from("accounts").select("*").order("created_at", { ascending: false }),
+      supabase.from("account_notes").select("*").order("created_at", { ascending: true }),
+    ]);
+
+  if (accountsError) {
+    // In production you'd want a proper error boundary/UI here.
+    throw new Error(`Failed to load accounts: ${accountsError.message}`);
+  }
+  if (notesError) {
+    throw new Error(`Failed to load account notes: ${notesError.message}`);
+  }
+
+  const notesByAccount = new Map<string, ReturnType<typeof rowToNote>[]>();
+  (noteRows as AccountNoteRow[] | null)?.forEach((row) => {
+    const note = rowToNote(row);
+    const existing = notesByAccount.get(row.account_id) ?? [];
+    existing.push(note);
+    notesByAccount.set(row.account_id, existing);
+  });
+
+  const accounts = (accountRows as AccountRow[] | null)?.map((row) =>
+    rowToAccount(row, notesByAccount.get(row.id) ?? [])
+  ) ?? [];
+
+  return <AgencyCRM initialAccounts={accounts} />;
 }
