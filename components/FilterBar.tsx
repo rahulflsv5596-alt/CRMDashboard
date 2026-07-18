@@ -36,7 +36,7 @@ export default function FilterBar({
         />
       </div>
 
-      <select
+      {/* <select
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value as Status | "All")}
         className="text-sm px-2 py-1.5 rounded border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -47,7 +47,7 @@ export default function FilterBar({
             {s}
           </option>
         ))}
-      </select>
+      </select> */}
 
       {hasActiveFilters && (
         <button

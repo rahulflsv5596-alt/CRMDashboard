@@ -84,7 +84,12 @@ export default function AccountRow({
               onUpdateLocal({ priority: v });
               onCommitUpdate({ priority: v });
             }}
+             className="appearance-none bg-white border border-slate-200 rounded px-2 py-1 pr-7 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-300"
             styleMap={PRIORITY_STYLE}
+          />
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400"
           />
         </td>
 

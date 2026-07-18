@@ -33,5 +33,12 @@ export default async function Page() {
     rowToAccount(row, notesByAccount.get(row.id) ?? [])
   ) ?? [];
 
-  return <AgencyCRM initialAccounts={accounts} />;
+  return (
+    <>
+      <AgencyCRM initialAccounts={accounts} />
+      <footer className="py-4 text-center text-xs text-slate-300 bg-black mt-8">
+      © {new Date().getFullYear()} Rahul Vishwakarma. All rights reserved.
+      </footer>
+    </>
+  );
 }

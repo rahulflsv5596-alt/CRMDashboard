@@ -1,8 +1,8 @@
 "use client";
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, TooltipProps } from "recharts";
-import { STATUSES, STATUS_STYLE } from "@/lib/constants";
-import { Status } from "@/lib/types";
+import { RELATIONSHIPS, REL_STYLE } from "@/lib/constants";
+import { Relationship } from "@/lib/types";
 
 function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!active || !payload || !payload.length) return null;
@@ -15,14 +15,13 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   );
 }
 
-interface StatusPieChartProps {
-  counts: Record<Status, number>;
+interface RelationshipPieChartProps {
+  counts: Record<Relationship, number>;
   total: number;
 }
 
-/** Donut chart of accounts by status, with a live count list beside it. */
-export default function StatusPieChart({ counts, total }: StatusPieChartProps) {
-  const data = STATUSES.map((s) => ({ name: s, value: counts[s] })).filter((d) => d.value > 0);
+export default function RelationshipPieChart({ counts, total }: RelationshipPieChartProps) {
+  const data = RELATIONSHIPS.map((r) => ({ name: r, value: counts[r] })).filter((d) => d.value > 0);
 
   if (total === 0) {
     return <div className="text-xs text-slate-400 italic py-8 text-center">No accounts yet.</div>;
@@ -43,19 +42,19 @@ export default function StatusPieChart({ counts, total }: StatusPieChartProps) {
               stroke="none"
             >
               {data.map((d) => (
-                <Cell key={d.name} fill={STATUS_STYLE[d.name].hex} />
+                <Cell key={d.name} fill={REL_STYLE[d.name].hex} />
               ))}
             </Pie>
-           <Tooltip content={<CustomTooltip />} isAnimationActive={false} />
+          <Tooltip content={<CustomTooltip />} isAnimationActive={false} />
           </PieChart>
         </ResponsiveContainer>
       </div>
       <div className="flex flex-col gap-1">
-        {STATUSES.map((s) => (
-          <div key={s} className="flex items-center gap-1.5 text-xs text-slate-600">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_STYLE[s].hex }} />
-            <span className="font-mono font-semibold tabular-nums w-4 text-right">{counts[s]}</span>
-            <span className="text-slate-400">{s}</span>
+        {RELATIONSHIPS.map((r) => (
+          <div key={r} className="flex items-center gap-1.5 text-xs text-slate-600">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: REL_STYLE[r].hex }} />
+            <span className="font-mono font-semibold tabular-nums w-4 text-right">{counts[r]}</span>
+            <span className="text-slate-400">{r}</span>
           </div>
         ))}
       </div>

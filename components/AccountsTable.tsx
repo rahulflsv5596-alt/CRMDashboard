@@ -3,12 +3,24 @@
 import { RefObject } from "react";
 import AccountRow from "./AccountRow";
 import { Account } from "@/lib/types";
+import ColumnFilterDropdown from "./ColumnFilterDropdown";
+import { PRIORITIES, STATUSES, RELATIONSHIPS, CONFLICTS } from "@/lib/constants";
+
+
+interface ColumnFilters {
+  priority: Set<string>;
+  status: Set<string>;
+  relationship: Set<string>;
+  conflict: Set<string>;
+}
 
 interface AccountsTableProps {
   accounts: Account[];
   expandedIds: Set<string>;
   pendingDeleteId: string | null;
   nameInputRef: RefObject<HTMLInputElement>;
+  columnFilters: ColumnFilters;
+  onColumnFiltersChange: (filters: ColumnFilters) => void;
   onToggleExpand: (id: string) => void;
   onUpdateLocal: (id: string, patch: Partial<Account>) => void;
   onCommitUpdate: (id: string, patch: Partial<Account>) => void;
@@ -27,6 +39,8 @@ export default function AccountsTable({
   expandedIds,
   pendingDeleteId,
   nameInputRef,
+  columnFilters,
+  onColumnFiltersChange,
   onToggleExpand,
   onUpdateLocal,
   onCommitUpdate,
@@ -45,12 +59,46 @@ export default function AccountsTable({
             <tr className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
               <th className="w-7 border-b border-slate-200"></th>
               <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[220px]">Agency</th>
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">Priority</th>
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[140px]">Status</th>
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[130px]">Relationship</th>
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[160px]">
-                Conflict / Clearance
+              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">Priority</th> */}
+              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+                <ColumnFilterDropdown
+                  label="Priority"
+                  options={PRIORITIES}
+                  selected={columnFilters.priority}
+                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, priority: s })}
+                />
               </th>
+              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[140px]">Status</th> */}
+                <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+                <ColumnFilterDropdown
+                  label="Status"
+                  options={STATUSES}
+                  selected={columnFilters.status}
+                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, status: s })}
+                />
+              </th>
+              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[130px]">Relationship</th> */}
+                <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+                <ColumnFilterDropdown
+                  label="Relationship"
+                  options={RELATIONSHIPS}
+                  selected={columnFilters.relationship}
+                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, relationship: s })}
+                />
+              </th>
+              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[160px]">
+                Conflict / Clearance
+              </th> */}
+
+               <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+                <ColumnFilterDropdown
+                  label=" Conflict / Clearance"
+                  options={CONFLICTS}
+                  selected={columnFilters.conflict}
+                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, conflict: s })}
+                />
+              </th>
+
               <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[80px]">Notes</th>
               <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[60px]">Delete</th>
             </tr>
