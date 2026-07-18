@@ -10,7 +10,10 @@ import { nextId, todayISO } from "@/lib/utils";
 import { PRIORITIES, STATUSES, RELATIONSHIPS } from "@/lib/constants";
 import { Account, Status, StatusCounts } from "@/lib/types";
 import Pagination from "./pagination";
+import { useRouter } from "next/navigation";
 //const PAGE_SIZE=10;
+
+
 interface AgencyCRMProps {
   /** Accounts fetched server-side from Supabase in app/page.tsx. */
   initialAccounts: Account[];
@@ -39,7 +42,7 @@ function toRowPatch(patch: Partial<Account>) {
  */
 export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
   const PAGE_SIZE = 20;
-  
+  const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<Status | "All">("All");
@@ -167,6 +170,12 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
   //   });
   // }, [accounts, query, statusFilter]);
 
+  const handleSignOut = async () => {
+  await supabase.auth.signOut();
+  router.push("/login");
+  router.refresh();
+};
+
 const filteredAccounts = accounts.filter((a) => {
   const matchesQuery =
     query.trim() === "" || a.agencyName.toLowerCase().includes(query.toLowerCase());
@@ -192,6 +201,8 @@ const filteredAccounts = accounts.filter((a) => {
       RELATIONSHIPS.map((r) => [r, 0])
     ) as StatusCounts["byRelationship"];
 
+
+
     accounts.forEach((a) => {
       byStatus[a.status]++;
       byPriority[a.priority]++;
@@ -203,18 +214,16 @@ const filteredAccounts = accounts.filter((a) => {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800">
-    <div className="bg-black text-white px-6 py-4 flex items-center justify-between">
+      <div className="bg-black text-white px-6 py-4 flex items-center justify-between">
       <div>
         <h1 className="text-lg font-semibold tracking-tight">Dashboard CRM</h1>
-        {/* <p className="text-xs text-slate-400">State DOTs · Counties · Localities</p> */}
       </div>
-      {/* <button
-        onClick={addAccount}
-        className="flex items-center gap-1.5 bg-teal-500 hover:bg-teal-400 transition-colors text-slate-900 font-semibold text-sm px-3 py-2 rounded"
+      <button
+        onClick={handleSignOut}
+        className="text-xs text-slate-400 hover:text-white transition-colors"
       >
-        <Plus size={16} strokeWidth={2.5} />
-        Add account
-      </button> */}
+        Sign out
+      </button>
     </div>
 
       <SummaryBar counts={counts} />
