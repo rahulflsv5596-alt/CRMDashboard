@@ -46,7 +46,7 @@ export default function LoginPage() {
         <h1 className="text-lg font-semibold text-slate-800 mb-1">
           {isSignUp ? "Create an account" : "Sign in"}
         </h1>
-        <p className="text-xs text-slate-400 mb-6">Agency Partnerships CRM</p>
+        <p className="text-xs text-slate-400 mb-6">Dashboard CRM</p>
 
         <form onSubmit={handleEmailAuth} className="space-y-3">
           <input
@@ -82,13 +82,13 @@ export default function LoginPage() {
           <span className="text-xs text-slate-400">or</span>
           <div className="h-px bg-slate-200 flex-1" />
         </div>
-
+{/* 
         <button
           onClick={handleGoogleAuth}
           className="w-full border border-slate-200 text-sm font-medium py-2 rounded hover:bg-slate-50 flex items-center justify-center gap-2"
         >
           Continue with Google
-        </button>
+        </button> */}
 
         <button
           onClick={() => setIsSignUp(!isSignUp)}
