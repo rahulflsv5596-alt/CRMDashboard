@@ -46,7 +46,7 @@ export default function LoginPage() {
         <h1 className="text-lg font-semibold text-slate-800 mb-1">
           {isSignUp ? "Create an account" : "Sign in"}
         </h1>
-        <p className="text-xs text-slate-400 mb-6">Dashboard CRM</p>
+        <p className="text-xs text-slate-400 mb-6">CRM Dashboard</p>
 
         <form onSubmit={handleEmailAuth} className="space-y-3">
           <input
@@ -55,7 +55,7 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-slate-200 text-slate-900 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <input
             type="password"
@@ -63,7 +63,7 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-slate-200 text-slate-900 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
 
           {error && <p className="text-xs text-rose-600">{error}</p>}
@@ -82,8 +82,8 @@ export default function LoginPage() {
           <span className="text-xs text-slate-400">or</span>
           <div className="h-px bg-slate-200 flex-1" />
         </div>
-{/* 
-        <button
+
+        {/* <button
           onClick={handleGoogleAuth}
           className="w-full border border-slate-200 text-sm font-medium py-2 rounded hover:bg-slate-50 flex items-center justify-center gap-2"
         >
