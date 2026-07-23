@@ -23,9 +23,7 @@ interface AccountRowProps {
   isFirstRow: boolean;
   nameInputRef: RefObject<HTMLInputElement>;
   onToggleExpand: () => void;
-  /** Updates local UI state only — safe to call on every keystroke. */
   onUpdateLocal: (patch: Partial<Account>) => void;
-  /** Persists a patch to Supabase — call for dropdowns immediately, text fields on blur. */
   onCommitUpdate: (patch: Partial<Account>) => void;
   onAddNote: (text: string) => void;
   onRequestDelete: () => void;
@@ -33,13 +31,6 @@ interface AccountRowProps {
   onConfirmDelete: () => void;
 }
 
-/**
- * One agency's row in the table, plus its expandable detail section
- * (Agency Facts + Notes log). Dropdown fields save to Supabase immediately
- * on change; the free-text agency name and facts fields update the local
- * UI on every keystroke but only save to Supabase on blur, so typing
- * doesn't fire a database write per character.
- */
 export default function AccountRow({
   account,
   isOpen,
@@ -58,9 +49,9 @@ export default function AccountRow({
 
   return (
     <>
-      <tr className="hover:bg-slate-50/70 border-b border-slate-100">
+      <tr className="hover:bg-[var(--panel-2)]/60 border-b border-[var(--line)] transition-colors">
         <td className="text-center align-middle">
-          <button onClick={onToggleExpand} className="text-slate-400 hover:text-slate-600">
+          <button onClick={onToggleExpand} className="text-[var(--ink-muted)] hover:text-[var(--ink)]">
             {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
           </button>
         </td>
@@ -72,7 +63,7 @@ export default function AccountRow({
             onChange={(e) => onUpdateLocal({ agencyName: e.target.value })}
             onBlur={() => onCommitUpdate({ agencyName: a.agencyName })}
             placeholder="Agency name..."
-            className="text-sm font-medium bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-slate-400 outline-none px-1 py-0.5 rounded-sm w-full"
+            className="text-sm font-medium bg-transparent text-[var(--ink)] placeholder-[var(--ink-muted)] border-0 border-b border-transparent hover:border-[var(--line-strong)] focus:border-[var(--accent)] outline-none px-1 py-0.5 rounded-sm w-full"
           />
         </td>
 
@@ -84,12 +75,7 @@ export default function AccountRow({
               onUpdateLocal({ priority: v });
               onCommitUpdate({ priority: v });
             }}
-             className="appearance-none bg-white border border-slate-200 rounded px-2 py-1 pr-7 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-300"
             styleMap={PRIORITY_STYLE}
-          />
-          <ChevronDown
-            size={14}
-            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400"
           />
         </td>
 
@@ -132,7 +118,7 @@ export default function AccountRow({
         <td className="px-3 py-2">
           <button
             onClick={onToggleExpand}
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap"
+            className="flex items-center gap-1 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded hover:bg-[var(--panel-2)] whitespace-nowrap transition-colors"
           >
             <StickyNote size={13} />
             {a.notes.length}
@@ -142,28 +128,28 @@ export default function AccountRow({
         <td className="px-3 py-2 relative">
           <button
             onClick={onRequestDelete}
-            className="text-slate-400 hover:text-rose-600 p-1.5 rounded hover:bg-rose-50 transition-colors"
+            className="text-[var(--ink-muted)] hover:text-[var(--red)] p-1.5 rounded hover:bg-[var(--red)]/10 transition-colors"
             title="Delete account"
           >
             <Trash2 size={14} />
           </button>
 
           {isDeletePending && (
-            <div className="absolute right-2 top-full mt-1 z-10 bg-white border border-slate-200 rounded-lg shadow-lg p-3 w-56">
-              <p className="text-xs text-slate-600 mb-2">
-                Delete <span className="font-semibold">{a.agencyName || "this account"}</span>? This
-                can&apos;t be undone.
+            <div className="absolute right-2 top-full mt-1 z-10 bg-[var(--panel-2)] border border-[var(--line-strong)] rounded-lg shadow-lg p-3 w-56">
+              <p className="text-xs text-[var(--ink-dim)] mb-2">
+                Delete <span className="font-semibold text-[var(--ink)]">{a.agencyName || "this account"}</span>?
+                This can&apos;t be undone.
               </p>
               <div className="flex justify-end gap-2">
                 <button
                   onClick={onCancelDelete}
-                  className="text-xs px-2 py-1 rounded text-slate-500 hover:bg-slate-100"
+                  className="text-xs px-2 py-1 rounded text-[var(--ink-muted)] hover:bg-[var(--panel)]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={onConfirmDelete}
-                  className="text-xs px-2 py-1 rounded bg-rose-600 text-white hover:bg-rose-500"
+                  className="text-xs px-2 py-1 rounded bg-[var(--red)] text-white hover:opacity-90"
                 >
                   Delete
                 </button>
@@ -174,13 +160,16 @@ export default function AccountRow({
       </tr>
 
       {isOpen && (
-        <tr className="border-b border-slate-200">
+        <tr className="border-b border-[var(--line)]">
           <td colSpan={8} className="p-0">
-            <div className="px-6 pt-3 pb-1 bg-slate-50">
+            <div className="px-6 pt-3 pb-1 bg-[var(--bg-2)]">
               <div className="flex items-start gap-2 max-w-2xl">
-                <ShieldCheck size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <ShieldCheck size={14} className="text-[var(--ink-muted)] mt-0.5 shrink-0" />
                 <div className="w-full">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold mb-1">
+                  <div
+                    className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-1"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
                     Agency facts
                   </div>
                   <textarea
@@ -189,7 +178,7 @@ export default function AccountRow({
                     onBlur={() => onCommitUpdate({ facts: a.facts })}
                     placeholder="Aggregated facts from public sources — budget, initiatives, funding cycles..."
                     rows={2}
-                    className="w-full text-sm text-slate-600 bg-white border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                    className="w-full text-sm text-[var(--ink-dim)] bg-[var(--panel)] border border-[var(--line)] rounded px-2 py-1.5 focus:outline-none focus:border-[var(--accent)] resize-none placeholder-[var(--ink-muted)]"
                   />
                 </div>
               </div>

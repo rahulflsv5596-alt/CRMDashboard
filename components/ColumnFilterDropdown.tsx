@@ -75,12 +75,12 @@ export default function ColumnFilterDropdown({
           <div
             ref={panelRef}
             style={{ position: "absolute", top: coords.top, left: coords.left, width: coords.width }}
-            className="z-50 bg-white border border-slate-200 rounded-lg shadow-lg p-2 normal-case"
+            className="z-50 bg-[var(--panel-2)] border border-[var(--line-strong)] rounded-lg shadow-lg p-2 normal-case"
           >
             {isFiltered && (
               <button
                 onClick={() => onChange(new Set())}
-                className="w-full text-left text-xs text-slate-400 hover:text-rose-500 px-2 py-1 mb-1 border-b border-slate-100"
+                className="w-full text-left text-xs text-white-400 hover:text-rose-500 px-2 py-1 mb-1 border-b border-slate-100"
               >
                 Clear filter
               </button>
@@ -88,7 +88,7 @@ export default function ColumnFilterDropdown({
             {options.map((opt) => (
               <label
                 key={opt}
-                className="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50 rounded cursor-pointer"
+                className="flex items-center gap-2 px-2 py-1.5 text-xs text-white-600 hover:bg-slate-50 rounded cursor-pointer"
               >
                 <input
                   type="checkbox"

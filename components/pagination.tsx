@@ -30,7 +30,7 @@ export default function Pagination({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           aria-label="Previous page"
-          className="p-1.5 rounded bg-black text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-black disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded bg-[var(--panel-2)] text-[var(--ink)] hover:bg-[var(--accent)] hover:text-[#1a1200] disabled:opacity-30 disabled:hover:bg-[var(--panel-2)] disabled:hover:text-[var(--ink)] disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
@@ -38,7 +38,7 @@ export default function Pagination({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           aria-label="Next page"
-          className="p-1.5 rounded bg-black text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-black disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded bg-[var(--panel-2)] text-[var(--ink)] hover:bg-[var(--accent)] hover:text-[#1a1200] disabled:opacity-30 disabled:hover:bg-[var(--panel-2)] disabled:hover:text-[var(--ink)] disabled:cursor-not-allowed transition-colors"
         >
           <ChevronRight size={16} />
         </button>

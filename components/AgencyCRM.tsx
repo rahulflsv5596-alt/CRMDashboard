@@ -1,26 +1,20 @@
 "use client";
 
-import { useState, useMemo, useRef,useEffect } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Plus } from "lucide-react";
 import SummaryBar from "./SummaryBar";
-import FilterBar from "./FilterBar";
 import AccountsTable from "./AccountsTable";
 import { createClient } from "@/lib/supabase/client";
-import { nextId, todayISO } from "@/lib/utils";
+import { todayISO } from "@/lib/utils";
 import { PRIORITIES, STATUSES, RELATIONSHIPS } from "@/lib/constants";
 import { Account, Status, StatusCounts } from "@/lib/types";
 import Pagination from "./pagination";
 import { useRouter } from "next/navigation";
-//const PAGE_SIZE=10;
-
 
 interface AgencyCRMProps {
-  /** Accounts fetched server-side from Supabase in app/page.tsx. */
   initialAccounts: Account[];
 }
 
-// Maps the UI's camelCase Account fields to Supabase's snake_case columns,
-// only including keys that were actually part of the patch.
 function toRowPatch(patch: Partial<Account>) {
   const row: Record<string, unknown> = {};
   if ("agencyName" in patch) row.agency_name = patch.agencyName;
@@ -32,20 +26,11 @@ function toRowPatch(patch: Partial<Account>) {
   return row;
 }
 
-/**
- * Top-level client component that owns all dashboard state and persists
- * every change straight to Supabase. Dropdown edits (priority, status,
- * relationship, conflict) save immediately on change. Free-text fields
- * (agency name, facts) save on blur, so a write isn't fired on every
- * keystroke — the local `accounts` state still updates immediately for a
- * responsive UI either way.
- */
 export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
   const PAGE_SIZE = 20;
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<Status | "All">("All");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -62,17 +47,22 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
     relationship: new Set(),
     conflict: new Set(),
   });
-  // Updates local state only — safe to call on every keystroke.
+
+  // Applies the atlas dark-theme background to <body> only while this
+  // dashboard is mounted, so other pages (e.g. /login) stay unaffected.
+  useEffect(() => {
+    document.body.classList.add("atlas-theme");
+    return () => document.body.classList.remove("atlas-theme");
+  }, []);
+
   const updateAccountLocal = (id: string, patch: Partial<Account>) => {
     setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
   };
 
   useEffect(() => {
-  setCurrentPage(1);
-  }, [statusFilter]);
+    setCurrentPage(1);
+  }, [columnFilters, query]);
 
-  // Writes a patch to Supabase. Call for dropdowns immediately, and for
-  // text fields only on blur.
   const commitAccountUpdate = async (id: string, patch: Partial<Account>) => {
     const rowPatch = toRowPatch(patch);
     if (Object.keys(rowPatch).length === 0) return;
@@ -92,12 +82,9 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
       return;
     }
 
-    
     setAccounts((prev) =>
       prev.map((a) =>
-        a.id === id
-          ? { ...a, notes: [...a.notes, { id: data.id, date: todayISO(), text }] }
-          : a
+        a.id === id ? { ...a, notes: [...a.notes, { id: data.id, date: todayISO(), text }] } : a
       )
     );
   };
@@ -137,7 +124,6 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
   };
 
   const deleteAccount = async (id: string) => {
-    // account_notes rows cascade-delete automatically via the FK constraint.
     const { error } = await supabase.from("accounts").delete().eq("id", id);
     if (error) {
       console.error("Failed to delete account:", error.message);
@@ -161,47 +147,35 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
     });
   };
 
-  // const filteredAccounts = useMemo(() => {
-  //   return accounts.filter((a) => {
-  //     const matchesQuery =
-  //       query.trim() === "" || a.agencyName.toLowerCase().includes(query.toLowerCase());
-  //     const matchesStatus = statusFilter === "All" || a.status === statusFilter;
-  //     return matchesQuery && matchesStatus;
-  //   });
-  // }, [accounts, query, statusFilter]);
-
   const handleSignOut = async () => {
-  await supabase.auth.signOut();
-  router.push("/login");
-  router.refresh();
-};
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
-const filteredAccounts = accounts.filter((a) => {
-  const matchesQuery =
-    query.trim() === "" || a.agencyName.toLowerCase().includes(query.toLowerCase());
-  if (!matchesQuery) return false;
-  if (columnFilters.priority.size > 0 && !columnFilters.priority.has(a.priority)) return false;
-  if (columnFilters.status.size > 0 && !columnFilters.status.has(a.status)) return false;
-  if (columnFilters.relationship.size > 0 && !columnFilters.relationship.has(a.relationship)) return false;
-  if (columnFilters.conflict.size > 0 && !columnFilters.conflict.has(a.conflict)) return false;
-  return true;
-});
+  const filteredAccounts = accounts.filter((a) => {
+    const matchesQuery =
+      query.trim() === "" || a.agencyName.toLowerCase().includes(query.toLowerCase());
+    if (!matchesQuery) return false;
+    if (columnFilters.priority.size > 0 && !columnFilters.priority.has(a.priority)) return false;
+    if (columnFilters.status.size > 0 && !columnFilters.status.has(a.status)) return false;
+    if (columnFilters.relationship.size > 0 && !columnFilters.relationship.has(a.relationship)) return false;
+    if (columnFilters.conflict.size > 0 && !columnFilters.conflict.has(a.conflict)) return false;
+    return true;
+  });
 
   const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
-
   const paginatedAccounts = filteredAccounts.slice(
-  (currentPage - 1) * PAGE_SIZE,
-  currentPage * PAGE_SIZE
-);
-  // Live aggregate counts — recomputed automatically whenever `accounts` changes.
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   const counts: StatusCounts = useMemo(() => {
     const byStatus = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<Status, number>;
     const byPriority = Object.fromEntries(PRIORITIES.map((p) => [p, 0])) as StatusCounts["byPriority"];
     const byRelationship = Object.fromEntries(
       RELATIONSHIPS.map((r) => [r, 0])
     ) as StatusCounts["byRelationship"];
-
-
 
     accounts.forEach((a) => {
       byStatus[a.status]++;
@@ -213,73 +187,96 @@ const filteredAccounts = accounts.filter((a) => {
   }, [accounts]);
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-800">
-      <div className="bg-black text-white px-6 py-4 flex items-center justify-between">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight">Dashboard CRM</h1>
-      </div>
-      <button
-        onClick={handleSignOut}
-        className="text-xs text-slate-400 hover:text-white transition-colors"
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* Masthead — matches Atlas header styling */}
+      <div
+        className="border-b border-[var(--line)] px-10 py-5 flex items-end justify-between gap-8"
+        style={{ background: "linear-gradient(180deg, rgba(244,185,66,0.03) 0%, transparent 100%)" }}
       >
-        Sign out
-      </button>
-    </div>
+        <div className="flex flex-col gap-1">
+          <div
+            className="flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--accent)]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            <span className="inline-block w-6 h-px bg-[var(--accent)]" />
+            Agency Partnerships CRM
+          </div>
+          <h1
+            className="text-[28px] leading-tight tracking-tight text-[var(--ink)]"
+            style={{ fontFamily: "'Fraunces', serif", fontWeight: 600 }}
+          >
+            Dashboard <em className="italic font-normal text-[var(--accent)]">CRM</em>
+          </h1>
+        </div>
+
+        <div
+          className="flex items-end gap-7 text-[11px] text-[var(--ink-muted)]"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-[9px] uppercase tracking-[0.15em]">Accounts</span>
+            <span
+              className="text-[var(--ink)] text-xl"
+              style={{ fontFamily: "'Fraunces', serif", fontWeight: 500 }}
+            >
+              {counts.total}
+            </span>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors pb-1"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
 
       <SummaryBar counts={counts} />
 
-      {/* <FilterBar
-        query={query}
-        setQuery={setQuery}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        visibleCount={filteredAccounts.length}
-        totalCount={accounts.length}
-      /> */}
-    <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-slate-200 bg-slate-50">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search agency name..."
-        className="text-sm border border-slate-200 rounded px-3 py-1.5 w-64 focus:outline-none focus:ring-2 focus:ring-teal-500"
-      />
-
-      <div className="flex items-center gap-4">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredAccounts.length}
-          pageSize={PAGE_SIZE}
-          onPageChange={setCurrentPage}
+      {/* Search + pagination + add row */}
+      <div className="flex items-center justify-between gap-4 px-10 py-3 border-b border-[var(--line)] bg-[var(--bg-2)]">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search agency name..."
+          className="text-sm bg-[var(--panel)] border border-[var(--line)] text-[var(--ink)] placeholder-[var(--ink-muted)] rounded px-3 py-1.5 w-64 focus:outline-none focus:border-[var(--accent)]"
         />
 
-        <button
-          onClick={addAccount}
-          className="flex items-center gap-1.5 bg-teal-500 hover:bg-teal-400 transition-colors text-slate-900 font-semibold text-sm px-3 py-2 rounded"
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          {/* Add account */}
-        </button>
-      </div>
-    </div>
-     <AccountsTable
-      accounts={paginatedAccounts}
-      expandedIds={expandedIds}
-      pendingDeleteId={pendingDeleteId}
-      nameInputRef={nameInputRef}
-      columnFilters={columnFilters}
-      onColumnFiltersChange={setColumnFilters}
-      onToggleExpand={toggleExpand}
-      onUpdateLocal={updateAccountLocal}
-      onCommitUpdate={commitAccountUpdate}
-      onAddNote={addNote}
-      onRequestDelete={setPendingDeleteId}
-      onCancelDelete={() => setPendingDeleteId(null)}
-      onConfirmDelete={deleteAccount}
-    />
+        <div className="flex items-center gap-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredAccounts.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
 
-    
+          <button
+            onClick={addAccount}
+            className="flex items-center gap-1.5 bg-[var(--accent)] hover:bg-[var(--accent-2)] transition-colors text-[#1a1200] font-semibold text-sm px-3 py-2 rounded"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            Add account
+          </button>
+        </div>
+      </div>
+
+      <AccountsTable
+        accounts={paginatedAccounts}
+        expandedIds={expandedIds}
+        pendingDeleteId={pendingDeleteId}
+        nameInputRef={nameInputRef}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={setColumnFilters}
+        onToggleExpand={toggleExpand}
+        onUpdateLocal={updateAccountLocal}
+        onCommitUpdate={commitAccountUpdate}
+        onAddNote={addNote}
+        onRequestDelete={setPendingDeleteId}
+        onCancelDelete={() => setPendingDeleteId(null)}
+        onConfirmDelete={deleteAccount}
+      />
     </div>
   );
 }

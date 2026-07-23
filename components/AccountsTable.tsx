@@ -6,7 +6,6 @@ import { Account } from "@/lib/types";
 import ColumnFilterDropdown from "./ColumnFilterDropdown";
 import { PRIORITIES, STATUSES, RELATIONSHIPS, CONFLICTS } from "@/lib/constants";
 
-
 interface ColumnFilters {
   priority: Set<string>;
   status: Set<string>;
@@ -30,10 +29,6 @@ interface AccountsTableProps {
   onConfirmDelete: (id: string) => void;
 }
 
-/**
- * Table shell (header + body). Receives the already-filtered list of
- * accounts and delegates each row's rendering to AccountRow.
- */
 export default function AccountsTable({
   accounts,
   expandedIds,
@@ -50,63 +45,65 @@ export default function AccountsTable({
   onConfirmDelete,
 }: AccountsTableProps) {
   const firstRowId = accounts[0]?.id;
+  const headerStyle = { fontFamily: "'JetBrains Mono', monospace" };
 
   return (
-    <div className="px-6 pb-10">
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden overflow-x-auto">
+    <div className="px-10 py-6">
+      <div className="bg-[var(--panel)] rounded-lg border border-[var(--line)] overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
-              <th className="w-7 border-b border-slate-200"></th>
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[220px]">Agency</th>
-              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">Priority</th> */}
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+            <tr
+              className="bg-[var(--bg-2)] text-[10px] uppercase tracking-[0.12em] text-[var(--ink-muted)] font-medium"
+              style={headerStyle}
+            >
+              <th className="w-7 border-b border-[var(--line)]"></th>
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[220px] text-[var(--ink-dim)]">
+                Agency
+              </th>
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[110px]">
                 <ColumnFilterDropdown
                   label="Priority"
                   options={PRIORITIES}
                   selected={columnFilters.priority}
-                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, priority: s })}
+                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, priority: s })}
                 />
               </th>
-              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[140px]">Status</th> */}
-                <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[130px]">
                 <ColumnFilterDropdown
                   label="Status"
                   options={STATUSES}
                   selected={columnFilters.status}
-                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, status: s })}
+                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, status: s })}
                 />
               </th>
-              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[130px]">Relationship</th> */}
-                <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[130px]">
                 <ColumnFilterDropdown
                   label="Relationship"
                   options={RELATIONSHIPS}
                   selected={columnFilters.relationship}
-                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, relationship: s })}
+                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, relationship: s })}
                 />
               </th>
-              {/* <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[160px]">
-                Conflict / Clearance
-              </th> */}
-
-               <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[110px]">
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[150px]">
                 <ColumnFilterDropdown
-                  label=" Conflict / Clearance"
+                  label="Conflict / Clearance"
                   options={CONFLICTS}
                   selected={columnFilters.conflict}
-                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, conflict: s })}
+                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, conflict: s })}
                 />
               </th>
-
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[80px]">Notes</th>
-              <th className="text-left px-3 py-2 border-b border-slate-200 min-w-[60px]">Delete</th>
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[80px] text-[var(--ink-dim)]">
+                Notes
+              </th>
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[60px] text-[var(--ink-dim)]">
+                Delete
+              </th>
             </tr>
           </thead>
           <tbody>
             {accounts.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={8} className="px-4 py-10 text-center text-sm text-[var(--ink-muted)]">
                   No accounts match your search. Try clearing filters or add a new account.
                 </td>
               </tr>
