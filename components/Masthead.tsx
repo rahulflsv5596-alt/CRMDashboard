@@ -1,4 +1,19 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { LogOut } from "lucide-react";
+
 export default function Masthead() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
   return (
     <header className="masthead">
       <div className="masthead-left">
@@ -48,23 +63,56 @@ export default function Masthead() {
           .
         </p>
       </div>
-      <div className="masthead-right">
-        <div className="masthead-stat">
-          <div className="masthead-stat-label">FY2025 National</div>
-          <div className="masthead-stat-value" id="hdr-total">$—</div>
+      <div className="masthead-right" style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'inherit' }}>
+          <div className="masthead-stat">
+            <div className="masthead-stat-label">FY2025 National</div>
+            <div className="masthead-stat-value" id="hdr-total">$—</div>
+          </div>
+          <div className="masthead-stat">
+            <div className="masthead-stat-label">Contacts</div>
+            <div className="masthead-stat-value" id="hdr-contacts">—</div>
+          </div>
+          <div className="masthead-stat">
+            <div className="masthead-stat-label">Champions</div>
+            <div className="masthead-stat-value" id="hdr-champions">—</div>
+          </div>
+          <div className="masthead-stat">
+            <div className="masthead-stat-label">Follow-ups Due</div>
+            <div className="masthead-stat-value" id="hdr-followups" style={{ color: 'var(--red)' }}>—</div>
+          </div>
         </div>
-        <div className="masthead-stat">
-          <div className="masthead-stat-label">Contacts</div>
-          <div className="masthead-stat-value" id="hdr-contacts">—</div>
-        </div>
-        <div className="masthead-stat">
-          <div className="masthead-stat-label">Champions</div>
-          <div className="masthead-stat-value" id="hdr-champions">—</div>
-        </div>
-        <div className="masthead-stat">
-          <div className="masthead-stat-label">Follow-ups Due</div>
-          <div className="masthead-stat-value" id="hdr-followups" style={{ color: 'var(--red)' }}>—</div>
-        </div>
+
+        <button
+          onClick={handleSignOut}
+          title="Sign out"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid var(--line)',
+            borderRadius: '6px',
+            padding: '6px 10px',
+            cursor: 'pointer',
+            color: 'var(--ink-muted)',
+            fontSize: '11px',
+            fontFamily: "'JetBrains Mono', monospace",
+            marginLeft: '16px',
+            transition: 'color 0.15s, border-color 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--ink)';
+            e.currentTarget.style.borderColor = 'var(--line-strong)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--ink-muted)';
+            e.currentTarget.style.borderColor = 'var(--line)';
+          }}
+        >
+          <LogOut size={13} />
+          Sign out
+        </button>
       </div>
     </header>
   );

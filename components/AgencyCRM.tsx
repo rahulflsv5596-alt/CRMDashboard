@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, LogOut } from "lucide-react";
 import SummaryBar from "./SummaryBar";
 import AccountsTable from "./AccountsTable";
 import { createClient } from "@/lib/supabase/client";
@@ -12,9 +12,12 @@ import Pagination from "./pagination";
 import { useRouter } from "next/navigation";
 
 interface AgencyCRMProps {
+  /** Accounts fetched server-side from Supabase in app/page.tsx. */
   initialAccounts: Account[];
 }
 
+// Maps the UI's camelCase Account fields to Supabase's snake_case columns,
+// only including keys that were actually part of the patch.
 function toRowPatch(patch: Partial<Account>) {
   const row: Record<string, unknown> = {};
   if ("agencyName" in patch) row.agency_name = patch.agencyName;
@@ -26,6 +29,11 @@ function toRowPatch(patch: Partial<Account>) {
   return row;
 }
 
+/**
+ * Top-level client component that owns all dashboard state and persists
+ * every change straight to Supabase. Visual theme matches the Atlas
+ * (dark navy background, gold accent, Fraunces/JetBrains Mono type).
+ */
 export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
   const PAGE_SIZE = 20;
   const router = useRouter();
@@ -55,6 +63,7 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
     return () => document.body.classList.remove("atlas-theme");
   }, []);
 
+  // Updates local state only — safe to call on every keystroke.
   const updateAccountLocal = (id: string, patch: Partial<Account>) => {
     setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
   };
@@ -63,6 +72,8 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
     setCurrentPage(1);
   }, [columnFilters, query]);
 
+  // Writes a patch to Supabase. Call for dropdowns immediately, and for
+  // text fields only on blur.
   const commitAccountUpdate = async (id: string, patch: Partial<Account>) => {
     const rowPatch = toRowPatch(patch);
     if (Object.keys(rowPatch).length === 0) return;
@@ -84,7 +95,9 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
 
     setAccounts((prev) =>
       prev.map((a) =>
-        a.id === id ? { ...a, notes: [...a.notes, { id: data.id, date: todayISO(), text }] } : a
+        a.id === id
+          ? { ...a, notes: [...a.notes, { id: data.id, date: todayISO(), text }] }
+          : a
       )
     );
   };
@@ -124,6 +137,7 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
   };
 
   const deleteAccount = async (id: string) => {
+    // account_notes rows cascade-delete automatically via the FK constraint.
     const { error } = await supabase.from("accounts").delete().eq("id", id);
     if (error) {
       console.error("Failed to delete account:", error.message);
@@ -165,11 +179,13 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
+
   const paginatedAccounts = filteredAccounts.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
 
+  // Live aggregate counts — recomputed automatically whenever `accounts` changes.
   const counts: StatusCounts = useMemo(() => {
     const byStatus = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<Status, number>;
     const byPriority = Object.fromEntries(PRIORITIES.map((p) => [p, 0])) as StatusCounts["byPriority"];
@@ -209,23 +225,49 @@ export default function AgencyCRM({ initialAccounts }: AgencyCRMProps) {
           </h1>
         </div>
 
-        <div
-          className="flex items-end gap-7 text-[11px] text-[var(--ink-muted)]"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
-        >
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[9px] uppercase tracking-[0.15em]">Accounts</span>
-            <span
-              className="text-[var(--ink)] text-xl"
-              style={{ fontFamily: "'Fraunces', serif", fontWeight: 500 }}
-            >
-              {counts.total}
-            </span>
+        <div className="flex items-end gap-4">
+          <div
+            className="flex items-end gap-7 text-[11px] text-[var(--ink-muted)]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[9px] uppercase tracking-[0.15em]">Accounts</span>
+              <span
+                className="text-[var(--ink)] text-xl"
+                style={{ fontFamily: "'Fraunces', serif", fontWeight: 500 }}
+              >
+                {counts.total}
+              </span>
+            </div>
           </div>
+
           <button
             onClick={handleSignOut}
-            className="text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors pb-1"
+            title="Sign out"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid var(--line)',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              cursor: 'pointer',
+              color: 'var(--ink-muted)',
+              fontSize: '11px',
+              fontFamily: "'JetBrains Mono', monospace",
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--ink)';
+              e.currentTarget.style.borderColor = 'var(--line-strong)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--ink-muted)';
+              e.currentTarget.style.borderColor = 'var(--line)';
+            }}
           >
+            <LogOut size={13} />
             Sign out
           </button>
         </div>
