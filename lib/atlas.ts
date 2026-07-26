@@ -8,6 +8,39 @@ import { STATES_TOPO, COUNTIES_TOPO, DOT_DATA, FIPS_TO_ABBR, SEED_CONTACTS } fro
 
 export function initAtlas() {
 
+// Put this at the TOP LEVEL of atlas.ts — outside initAtlas, outside any function
+// (around line 70, near where `let selectedState = null` is declared)
+// Expose a tab refresh hook so React modals can trigger re-render after saving
+(window as any).__atlasRefreshTab = (tab?: string) => {
+  if (tab) activeTab = tab;
+  if (selectedState) renderDetail();
+};
+
+
+(window as any).__atlasDeleteAgency = async (id: string, btn: HTMLButtonElement) => {
+  if (!confirm('Delete this agency? This cannot be undone.')) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    const { error } = await supabase.from('accounts').delete().eq('id', id);
+    if (error) {
+      alert('Failed to delete: ' + error.message);
+      btn.disabled = false;
+      btn.textContent = '×';
+      return;
+    }
+    // Remove card from DOM immediately
+    const card = document.getElementById(`agency-row-${id}`);
+    if (card) card.remove();
+  } catch {
+    alert('Unexpected error');
+    btn.disabled = false;
+    btn.textContent = '×';
+  }
+};
+
 function fmtMoney(m) {
   if (m >= 1000) return '$' + (m / 1000).toFixed(2) + 'B';
   if (m >= 100) return '$' + m.toFixed(0) + 'M';
@@ -672,24 +705,130 @@ function renderLeadership(s) {
   `;
 }
 
-function renderAgencies(s) {
-  if (!s.agencies || s.agencies.length === 0) {
-    return `<div class="notice-block"><div class="notice-block-title">No partner agencies cataloged</div>${s.name} delivers transportation primarily through ${s.agencyName}.</div>`;
+async function fetchSupabaseAgencies(stateName) {
+  try {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('accounts')
+      .select('id, agency_name, agency_facts')
+      .eq('state', stateName);
+    return data ?? [];
+  } catch {
+    return [];
   }
-  const cards = s.agencies.map(a => {
-    const link = a.url ? `<div class="agency-link">${iconLink()}<a href="${a.url}" target="_blank" rel="noopener">${a.url.replace('https://','').replace('http://','')}</a></div>` : '';
-    const note = a.note ? `<div class="agency-note">${a.note}</div>` : '';
-    return `
-      <div class="agency-card">
-        <div class="agency-card-name">${a.name}<span class="agency-tag">${a.type}</span></div>
-        ${note}
-        ${link}
-      </div>
-    `;
-  }).join('');
+}
+
+function agencyCard(name, type, url, note) {
+  const link = url
+    ? `<div class="agency-link">${iconLink()}<a href="${url}" target="_blank" rel="noopener">${url.replace('https://','').replace('http://','')}</a></div>`
+    : '';
+  const noteHtml = note ? `<div class="agency-note">${note}</div>` : '';
   return `
-    <div class="section-title">Partner Agencies <span class="section-title-extra">${s.agencies.length} verified</span></div>
-    ${cards}
+    <div class="agency-card">
+      <div class="agency-card-name">${name}<span class="agency-tag">${type}</span></div>
+      ${noteHtml}
+      ${link}
+    </div>
+  `;
+}
+
+function renderAgencies(s) {
+  const addBtn = `
+    <button
+      class="add-agency-btn"
+      onclick="window.__atlasOpenAgencyModal('${s.name}')"
+      title="Add a new agency for ${s.name}"
+    >
+      + Add Agency
+    </button>
+  `;
+
+  // Build cards from hardcoded DOT_DATA agencies
+  const dotCards = (s.agencies ?? []).map(a =>
+    agencyCard(a.name, a.type, a.url, a.note)
+  ).join('');
+
+  const initialCount = (s.agencies ?? []).length;
+
+  // Container ID used to inject Supabase agencies after fetch
+  const containerId = `agency-supabase-${s.abbr}`;
+
+  // Kick off async fetch — injects additional cards into the container
+  // after the synchronous render has already painted the hardcoded ones.
+  setTimeout(async () => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const rows = await fetchSupabaseAgencies(s.name);
+
+    // Filter out agencies already shown from DOT_DATA (match by name)
+    const dotNames = new Set((s.agencies ?? []).map(a => a.name.toLowerCase().trim()));
+    const newRows = rows.filter(
+      r => r.agency_name && !dotNames.has(r.agency_name.toLowerCase().trim())
+    );
+
+    if (newRows.length === 0) return;
+
+    // Update the count in the header
+    const countEl = document.getElementById(`agency-count-${s.abbr}`);
+    if (countEl) countEl.textContent = `${initialCount + newRows.length} total`;
+
+    // Extract URL and type from agency_facts if stored there
+const extraCards = newRows.map(r => {
+  const facts = r.agency_facts ?? '';
+  const urlMatch = facts.match(/Website:\s*(https?:\/\/\S+)/);
+  const typeMatch = facts.match(/Type:\s*(.+)/);
+  const url = urlMatch ? urlMatch[1] : '';
+  const type = typeMatch ? typeMatch[1].trim() : 'Added';
+  const deleteBtn = `
+    <button
+      class="agency-delete-btn"
+      onclick="window.__atlasDeleteAgency('${r.id}', this)"
+      title="Delete this agency"
+    >
+      ×
+    </button>
+  `;
+  return `
+    <div class="agency-card agency-card--added" id="agency-row-${r.id}">
+      <div class="agency-card-name">
+        ${r.agency_name}
+        <span class="agency-tag">${type}</span>
+        ${deleteBtn}
+      </div>
+      ${url ? `<div class="agency-link">${iconLink()}<a href="${url}" target="_blank" rel="noopener">${url.replace('https://','').replace('http://','')}</a></div>` : ''}
+    </div>
+  `;
+}).join('');
+
+    container.innerHTML += extraCards;
+  }, 0);
+
+  if (initialCount === 0) {
+    return `
+      <div class="section-title">
+        Partner Agencies
+        <span class="section-title-extra" id="agency-count-${s.abbr}">0 verified</span>
+        ${addBtn}
+      </div>
+      <div class="notice-block">
+        <div class="notice-block-title">No partner agencies cataloged</div>
+        ${s.name} delivers transportation primarily through ${s.agencyName}.
+      </div>
+      <div id="${containerId}"></div>
+    `;
+  }
+
+  return `
+    <div class="section-title">
+      Partner Agencies
+      <span class="section-title-extra" id="agency-count-${s.abbr}">${initialCount} verified</span>
+      ${addBtn}
+    </div>
+    <div id="${containerId}">
+      ${dotCards}
+    </div>
   `;
 }
 
@@ -758,6 +897,7 @@ function renderNational() {
 // INIT
 initSvg();
 renderStates();
+
 renderNational();
 
   // ===== CRM module (originally the second <script>) =====
@@ -964,52 +1104,17 @@ const CRM = (() => {
   }
 
   // ---------- modal ----------
-  function openModal(contactId, prefillState) {
-    editingId = contactId || null;
-    const overlay = document.getElementById('contact-modal-overlay');
-    const title = document.getElementById('modal-title');
-    const delBtn = document.getElementById('modal-delete');
-    const intSection = document.getElementById('interaction-log-section');
-
-    const stateSel = document.getElementById('cf-state');
-    stateSel.innerHTML = Object.keys(DOT_DATA).sort().map(a =>
-      `<option value="${a}">${a} — ${DOT_DATA[a].name}</option>`).join('');
-
-    if (editingId) {
-      const c = contacts.find(x => x.id === editingId);
-      if (!c) return;
-      title.textContent = 'Edit Contact';
-      delBtn.style.display = 'inline-block';
-      intSection.style.display = 'block';
-      document.getElementById('cf-name').value = c.name || '';
-      document.getElementById('cf-title').value = c.title || '';
-      document.getElementById('cf-org').value = c.org || '';
-      stateSel.value = c.state || 'AL';
-      document.getElementById('cf-category').value = c.category || 'Other';
-      document.getElementById('cf-influence').value = c.influence || 'Medium';
-      document.getElementById('cf-stage').value = c.stage || 'New';
-      document.getElementById('cf-email').value = c.email || '';
-      document.getElementById('cf-phone').value = c.phone || '';
-      document.getElementById('cf-tags').value = (c.tags || []).join('; ');
-      document.getElementById('cf-notes').value = c.notes || '';
-      document.getElementById('cf-next-action').value = c.nextAction || '';
-      document.getElementById('cf-next-action-date').value = c.nextActionDate || '';
-      renderInteractions(c);
-    } else {
-      title.textContent = 'New Contact';
-      delBtn.style.display = 'none';
-      intSection.style.display = 'none';
-      ['cf-name','cf-title','cf-org','cf-email','cf-phone','cf-tags','cf-notes','cf-next-action','cf-next-action-date'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-      document.getElementById('cf-category').value = 'Other';
-      document.getElementById('cf-influence').value = 'Medium';
-      document.getElementById('cf-stage').value = 'New';
-      if (prefillState && DOT_DATA[prefillState]) stateSel.value = prefillState;
-    }
-    overlay.classList.add('show');
-    document.getElementById('cf-name').focus();
+// REPLACE the entire openModal function with this:
+function openModal(contactId, prefillState) {
+  const stateAbbr = prefillState
+    ? Object.keys(DOT_DATA).find(a => a === prefillState) || null
+    : selectedState || null;
+  // Convert state abbreviation to full name for ContactModal
+  const stateName = stateAbbr && DOT_DATA[stateAbbr] ? DOT_DATA[stateAbbr].name : null;
+  if (typeof window.__atlasOpenModal === 'function') {
+    window.__atlasOpenModal(stateName, contactId || null);
   }
+}
 
   function renderInteractions(c) {
     const list = document.getElementById('interaction-list');
@@ -1023,10 +1128,12 @@ const CRM = (() => {
     `).join('') : '<div class="crm-empty" style="padding:10px 0;">No interactions logged yet.</div>';
   }
 
-  function closeModal() {
-    document.getElementById('contact-modal-overlay').classList.remove('show');
-    editingId = null;
+// REPLACE closeModal with this:
+function closeModal() {
+  if (typeof window.__atlasCloseModal === 'function') {
+    window.__atlasCloseModal();
   }
+}
 
   function saveFromModal() {
     const name = document.getElementById('cf-name').value.trim();
@@ -1208,21 +1315,21 @@ const CRM = (() => {
     });
   }
 
-  function wireModal() {
-    document.getElementById('modal-close').addEventListener('click', closeModal);
-    document.getElementById('modal-cancel').addEventListener('click', closeModal);
-    document.getElementById('modal-save').addEventListener('click', saveFromModal);
-    document.getElementById('modal-delete').addEventListener('click', deleteFromModal);
-    document.getElementById('int-add-btn').addEventListener('click', logInteraction);
-    document.getElementById('int-note').addEventListener('keydown', e => { if (e.key === 'Enter') logInteraction(); });
-    document.getElementById('contact-modal-overlay').addEventListener('click', e => {
-      if (e.target.id === 'contact-modal-overlay') closeModal();
-    });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-  }
+  // function wireModal() {
+  //   document.getElementById('modal-close').addEventListener('click', closeModal);
+  //   document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  //   document.getElementById('modal-save').addEventListener('click', saveFromModal);
+  //   document.getElementById('modal-delete').addEventListener('click', deleteFromModal);
+  //   document.getElementById('int-add-btn').addEventListener('click', logInteraction);
+  //   document.getElementById('int-note').addEventListener('keydown', e => { if (e.key === 'Enter') logInteraction(); });
+  //   document.getElementById('contact-modal-overlay').addEventListener('click', e => {
+  //     if (e.target.id === 'contact-modal-overlay') closeModal();
+  //   });
+  //   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  // }
 
   load();
-  wireModal();
+  //wireModal();
 
   return { countForState, renderHome, renderStateContacts, wire };
 })();

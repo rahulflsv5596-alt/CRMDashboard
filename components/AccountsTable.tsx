@@ -2,35 +2,34 @@
 
 import { RefObject } from "react";
 import AccountRow from "./AccountRow";
-import { Account } from "@/lib/types";
+import { Contact } from "@/lib/types";
 import ColumnFilterDropdown from "./ColumnFilterDropdown";
-import { PRIORITIES, STATUSES, RELATIONSHIPS, CONFLICTS } from "@/lib/constants";
+import { INFLUENCES, STAGES } from "@/lib/constants";
 
 interface ColumnFilters {
-  priority: Set<string>;
-  status: Set<string>;
-  relationship: Set<string>;
-  conflict: Set<string>;
+  influence: Set<string>;
+  stage: Set<string>;
+  state: Set<string>;
 }
 
-interface AccountsTableProps {
-  accounts: Account[];
+interface ContactsTableProps {
+  contacts: Contact[];
   expandedIds: Set<string>;
   pendingDeleteId: string | null;
   nameInputRef: RefObject<HTMLInputElement>;
   columnFilters: ColumnFilters;
   onColumnFiltersChange: (filters: ColumnFilters) => void;
   onToggleExpand: (id: string) => void;
-  onUpdateLocal: (id: string, patch: Partial<Account>) => void;
-  onCommitUpdate: (id: string, patch: Partial<Account>) => void;
+  onUpdateLocal: (id: string, patch: Partial<Contact>) => void;
+  onCommitUpdate: (id: string, patch: Partial<Contact>) => void;
   onAddNote: (id: string, text: string) => void;
   onRequestDelete: (id: string) => void;
   onCancelDelete: () => void;
   onConfirmDelete: (id: string) => void;
 }
 
-export default function AccountsTable({
-  accounts,
+export default function ContactsTable({
+  contacts,
   expandedIds,
   pendingDeleteId,
   nameInputRef,
@@ -43,9 +42,14 @@ export default function AccountsTable({
   onRequestDelete,
   onCancelDelete,
   onConfirmDelete,
-}: AccountsTableProps) {
-  const firstRowId = accounts[0]?.id;
+}: ContactsTableProps) {
+  const firstRowId = contacts[0]?.id;
   const headerStyle = { fontFamily: "'JetBrains Mono', monospace" };
+
+  // Collect unique states for the state filter
+  const uniqueStates = Array.from(
+    new Set(contacts.map((c) => c.state).filter(Boolean))
+  ).sort() as string[];
 
   return (
     <div className="px-10 py-6">
@@ -58,39 +62,34 @@ export default function AccountsTable({
             >
               <th className="w-7 border-b border-[var(--line)]"></th>
               <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[220px] text-[var(--ink-dim)]">
-                Agency
+                Name
               </th>
               <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[110px]">
                 <ColumnFilterDropdown
-                  label="Priority"
-                  options={PRIORITIES}
-                  selected={columnFilters.priority}
-                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, priority: s })}
+                  label="Influence"
+                  options={INFLUENCES}
+                  selected={columnFilters.influence}
+                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, influence: s })}
                 />
               </th>
               <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[130px]">
                 <ColumnFilterDropdown
-                  label="Status"
-                  options={STATUSES}
-                  selected={columnFilters.status}
-                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, status: s })}
+                  label="Stage"
+                  options={STAGES}
+                  selected={columnFilters.stage}
+                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, stage: s })}
                 />
               </th>
-              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[130px]">
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[120px]">
                 <ColumnFilterDropdown
-                  label="Relationship"
-                  options={RELATIONSHIPS}
-                  selected={columnFilters.relationship}
-                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, relationship: s })}
+                  label="State"
+                  options={uniqueStates}
+                  selected={columnFilters.state}
+                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, state: s })}
                 />
               </th>
-              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[150px]">
-                <ColumnFilterDropdown
-                  label="Conflict / Clearance"
-                  options={CONFLICTS}
-                  selected={columnFilters.conflict}
-                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, conflict: s })}
-                />
+              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[80px] text-[var(--ink-dim)]">
+                Agencies
               </th>
               <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[80px] text-[var(--ink-dim)]">
                 Notes
@@ -101,29 +100,29 @@ export default function AccountsTable({
             </tr>
           </thead>
           <tbody>
-            {accounts.length === 0 && (
+            {contacts.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center text-sm text-[var(--ink-muted)]">
-                  No accounts match your search. Try clearing filters or add a new account.
+                  No contacts match your search. Try clearing filters or add a new contact.
                 </td>
               </tr>
             )}
 
-            {accounts.map((a) => (
+            {contacts.map((c) => (
               <AccountRow
-                key={a.id}
-                account={a}
-                isOpen={expandedIds.has(a.id)}
-                isDeletePending={pendingDeleteId === a.id}
-                isFirstRow={a.id === firstRowId}
+                key={c.id}
+                contact={c}
+                isOpen={expandedIds.has(c.id)}
+                isDeletePending={pendingDeleteId === c.id}
+                isFirstRow={c.id === firstRowId}
                 nameInputRef={nameInputRef}
-                onToggleExpand={() => onToggleExpand(a.id)}
-                onUpdateLocal={(patch) => onUpdateLocal(a.id, patch)}
-                onCommitUpdate={(patch) => onCommitUpdate(a.id, patch)}
-                onAddNote={(text) => onAddNote(a.id, text)}
-                onRequestDelete={() => onRequestDelete(a.id)}
+                onToggleExpand={() => onToggleExpand(c.id)}
+                onUpdateLocal={(patch) => onUpdateLocal(c.id, patch)}
+                onCommitUpdate={(patch) => onCommitUpdate(c.id, patch)}
+                onAddNote={(text) => onAddNote(c.id, text)}
+                onRequestDelete={() => onRequestDelete(c.id)}
                 onCancelDelete={onCancelDelete}
-                onConfirmDelete={() => onConfirmDelete(a.id)}
+                onConfirmDelete={() => onConfirmDelete(c.id)}
               />
             ))}
           </tbody>

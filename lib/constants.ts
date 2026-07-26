@@ -1,4 +1,4 @@
-import { Priority, Status, Relationship, Conflict, StyleToken } from "./types";
+import { Priority, Status, Relationship, Conflict, Influence, Stage, StyleToken } from "./types";
 
 export const PRIORITIES: Priority[] = ["P1", "P2", "P3"];
 
@@ -15,12 +15,16 @@ export const RELATIONSHIPS: Relationship[] = ["Strong", "Moderate", "Limited", "
 
 export const CONFLICTS: Conflict[] = ["Clear", "Needs Review", "Existing Engagement"];
 
+export const INFLUENCES: Influence[] = ["High", "Medium", "Low"];
+
+export const STAGES: Stage[] = ["New", "Contacted", "Engaged", "Champion", "Dormant"];
+
 export const STATUS_STYLE: Record<Status, StyleToken> = {
   "Not Contacted": { bg: "bg-white/5", text: "text-[var(--ink-muted)]", dot: "bg-[var(--ink-muted)]", hex: "#6b7494" },
   "Demo Scheduled": { bg: "bg-[var(--blue)]/15", text: "text-[var(--blue)]", dot: "bg-[var(--blue)]", hex: "#6da3d9" },
-  "Pilot Active": { bg: "bg-[var(--green)]/15", text: "text-[var(--green)]", dot: "bg-[var(--green)]", hex: "#5fb78a" },
-  "Proposal Sent": { bg: "bg-[var(--accent)]/15", text: "text-[var(--accent)]", dot: "bg-[var(--accent)]", hex: "#f4b942" },
-  Won: { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]", dot: "bg-[#4ade80]", hex: "#4ade80" },
+  "Pilot Active":   { bg: "bg-[var(--green)]/15", text: "text-[var(--green)]", dot: "bg-[var(--green)]", hex: "#5fb78a" },
+  "Proposal Sent":  { bg: "bg-[var(--accent)]/15", text: "text-[var(--accent)]", dot: "bg-[var(--accent)]", hex: "#f4b942" },
+  Won:  { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]", dot: "bg-[#4ade80]", hex: "#4ade80" },
   Lost: { bg: "bg-[var(--red)]/15", text: "text-[var(--red)]", dot: "bg-[var(--red)]", hex: "#c96f7e" },
 };
 
@@ -29,15 +33,30 @@ export const PRIORITY_STYLE: Record<Priority, StyleToken> = {
   P2: { bg: "bg-[var(--blue)]/15", text: "text-[var(--blue)]", hex: "#6da3d9" },
   P3: { bg: "bg-white/5", text: "text-[var(--ink-muted)]", hex: "#6b7494" },
 };
+
 export const REL_STYLE: Record<Relationship, StyleToken> = {
-  Strong: { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]", hex: "#4ade80" },
+  Strong:   { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]", hex: "#4ade80" },
   Moderate: { bg: "bg-[var(--blue)]/15", text: "text-[var(--blue)]", hex: "#6da3d9" },
-  Limited: { bg: "bg-[var(--accent)]/15", text: "text-[var(--accent)]", hex: "#f4b942" },
-  Unknown: { bg: "bg-white/5", text: "text-[var(--ink-muted)]", hex: "#6b7494" },
+  Limited:  { bg: "bg-[var(--accent)]/15", text: "text-[var(--accent)]", hex: "#f4b942" },
+  Unknown:  { bg: "bg-white/5", text: "text-[var(--ink-muted)]", hex: "#6b7494" },
 };
 
 export const CONFLICT_STYLE: Record<Conflict, StyleToken> = {
-  Clear: { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]" },
-  "Needs Review": { bg: "bg-[var(--accent)]/15", text: "text-[var(--accent)]" },
+  Clear:                 { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]" },
+  "Needs Review":        { bg: "bg-[var(--accent)]/15", text: "text-[var(--accent)]" },
   "Existing Engagement": { bg: "bg-[#a888d8]/15", text: "text-[#a888d8]" },
+};
+
+export const INFLUENCE_STYLE: Record<Influence, StyleToken> = {
+  High:   { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]", hex: "#4ade80" },
+  Medium: { bg: "bg-[var(--blue)]/15", text: "text-[var(--blue)]", hex: "#6da3d9" },
+  Low:    { bg: "bg-white/5", text: "text-[var(--ink-muted)]", hex: "#6b7494" },
+};
+
+export const STAGE_STYLE: Record<Stage, StyleToken> = {
+  New:       { bg: "bg-white/5", text: "text-[var(--ink-muted)]", hex: "#6b7494" },
+  Contacted: { bg: "bg-[var(--blue)]/15", text: "text-[var(--blue)]", hex: "#6da3d9" },
+  Engaged:   { bg: "bg-[var(--accent)]/15", text: "text-[var(--accent)]", hex: "#f4b942" },
+  Champion:  { bg: "bg-[#4ade80]/15", text: "text-[#4ade80]", hex: "#4ade80" },
+  Dormant:   { bg: "bg-[var(--red)]/15", text: "text-[var(--red)]", hex: "#c96f7e" },
 };

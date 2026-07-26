@@ -1456,3 +1456,54 @@ body.atlas-theme {
   color: var(--ink);
   font-family: 'Inter', -apple-system, sans-serif;
 }
+
+.add-agency-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(244, 185, 66, 0.12);
+  border: 1px solid rgba(244, 185, 66, 0.3);
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.add-agency-btn:hover {
+  background: rgba(244, 185, 66, 0.2);
+  border-color: var(--accent);
+}
+
+/* Make section-title a flex row so the button pushes to the right */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agency-delete-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.agency-delete-btn:hover {
+  color: var(--red);
+}
+
+.agency-card--added .agency-card-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

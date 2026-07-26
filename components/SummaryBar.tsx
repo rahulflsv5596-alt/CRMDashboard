@@ -1,50 +1,56 @@
 "use client";
 
-import StatusPieChart from "./StatusPieChart";
-import PriorityPieChart from "./PriorityPieChart";
-import RelationshipPieChart from "./RelationshipPieChart";
-import { StatusCounts } from "@/lib/types";
+import StagePieChart from "./StagePieChart";
+import InfluencePieChart from "./InfluencePieChart";
+import StatePieChart from "./StatePieChart";
+import { Stage, Influence } from "@/lib/types";
+import { STAGES, INFLUENCES } from "@/lib/constants";
+import { ContactRow } from "./AgencyCRM";
 
 interface SummaryBarProps {
-  counts: StatusCounts;
+  contacts: ContactRow[];
 }
 
-export default function SummaryBar({ counts }: SummaryBarProps) {
-  const labelStyle = {
-    fontFamily: "'JetBrains Mono', monospace",
-  };
+export default function SummaryBar({ contacts }: SummaryBarProps) {
+  const total = contacts.length;
+  const labelStyle = { fontFamily: "'JetBrains Mono', monospace" };
+
+  const byStageCounts = Object.fromEntries(
+    STAGES.map((s) => [s, contacts.filter((c) => c.stage === s).length])
+  ) as Record<Stage, number>;
+
+  const byInfluence = Object.fromEntries(
+    INFLUENCES.map((i) => [i, contacts.filter((c) => c.influence === i).length])
+  ) as Record<Influence, number>;
+
+  const byState: Record<string, number> = {};
+  contacts.forEach((c) => {
+    const s = c.state || "Unknown";
+    byState[s] = (byState[s] ?? 0) + 1;
+  });
 
   return (
     <div className="bg-[var(--bg-2)] border-b border-[var(--line)] px-10 py-5">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="border border-[var(--line)] bg-[var(--panel)] rounded-lg p-4">
-          <div
-            className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-2"
-            style={labelStyle}
-          >
-            Pipeline · {counts.total} accounts
+          <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-2" style={labelStyle}>
+            By Stage · {total} contacts
           </div>
-          <StatusPieChart counts={counts.byStatus} total={counts.total} />
+          <StagePieChart counts={byStageCounts} total={total} />
         </div>
 
         <div className="border border-[var(--line)] bg-[var(--panel)] rounded-lg p-4">
-          <div
-            className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-2"
-            style={labelStyle}
-          >
-            By priority
+          <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-2" style={labelStyle}>
+            By Influence
           </div>
-          <PriorityPieChart counts={counts.byPriority} total={counts.total} />
+          <InfluencePieChart counts={byInfluence} total={total} />
         </div>
 
         <div className="border border-[var(--line)] bg-[var(--panel)] rounded-lg p-4">
-          <div
-            className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-2"
-            style={labelStyle}
-          >
-            By relationship strength
+          <div className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-2" style={labelStyle}>
+            By State
           </div>
-          <RelationshipPieChart counts={counts.byRelationship} total={counts.total} />
+          <StatePieChart counts={byState} total={total} />
         </div>
       </div>
     </div>
