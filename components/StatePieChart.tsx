@@ -7,7 +7,20 @@ const STATE_COLORS = [
   "#c96f7e", "#e8a23d", "#6b7494", "#8dd3c7", "#bebada",
 ];
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+type TooltipPayload = {
+  name?: string;
+  value?: number | string;
+  payload?: {
+    name?: string;
+    value?: number | string;
+  };
+};
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+}
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const p = payload[0];
   return (

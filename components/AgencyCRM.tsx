@@ -8,6 +8,7 @@ import AccountsTable from "./AccountsTable";
 import SummaryBar from "./SummaryBar";
 import Pagination from "./pagination";
 import ColumnToggle, { DEFAULT_VISIBLE, ColumnKey } from "./ColumnToggle";
+import { Agency } from "./AccountRow";
 
 export type Influence = "High" | "Medium" | "Low";
 export type Stage = "New" | "Contacted" | "Engaged" | "Champion" | "Dormant";
@@ -32,7 +33,7 @@ export interface ContactRow {
   notes: string;
   nextAction: string;
   nextActionDate: string;
-  agencies: string[];   // agency names from contact_agencies join
+  agencies: Agency[];   // agency names from contact_agencies join
   noteLog: ContactNote[];
 }
 

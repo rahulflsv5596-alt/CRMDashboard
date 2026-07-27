@@ -12,7 +12,21 @@ const STAGE_HEX: Record<Stage, string> = {
   Dormant:   "#c96f7e",
 };
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+type TooltipPayload = {
+  name?: string;
+  value?: number | string;
+  payload?: {
+    name?: string;
+    value?: number | string;
+  };
+};
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const p = payload[0];
   return (

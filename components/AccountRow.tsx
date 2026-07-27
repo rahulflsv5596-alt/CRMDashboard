@@ -46,7 +46,7 @@ interface AccountRowProps {
   isOpen: boolean;
   isDeletePending: boolean;
   isFirstRow: boolean;
-  nameInputRef: RefObject<HTMLInputElement>;
+  nameInputRef: RefObject<HTMLInputElement| null>;
   visibleColumns: Record<ColumnKey, boolean>;
   onToggleExpand: () => void;
   onUpdateLocal: (patch: Partial<ContactRow>) => void;

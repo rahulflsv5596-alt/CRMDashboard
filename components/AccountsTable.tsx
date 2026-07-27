@@ -17,7 +17,7 @@ interface ContactsTableProps {
   contacts: Contact[];
   expandedIds: Set<string>;
   pendingDeleteId: string | null;
-  nameInputRef: RefObject<HTMLInputElement>;
+  nameInputRef: React.RefObject<HTMLInputElement | null>;
   columnFilters: ColumnFilters;
   onColumnFiltersChange: (filters: ColumnFilters) => void;
   visibleColumns: Record<ColumnKey, boolean>;
