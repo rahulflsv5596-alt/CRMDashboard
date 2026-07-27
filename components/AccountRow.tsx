@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, RefObject } from "react";
+import { RefObject } from "react";
+import { ColumnKey } from "./ColumnToggle";
 import { ChevronDown, ChevronRight, StickyNote, Trash2, Building2 } from "lucide-react";
 import Select from "./Select";
 import NotesPanel from "./NotesPanel";
@@ -10,17 +11,46 @@ import {
   INFLUENCE_STYLE,
   STAGE_STYLE,
 } from "@/lib/constants";
-import { Contact } from "@/lib/types";
+
+export interface Agency {
+  name: string;
+  url: string | null;
+}
+
+export interface ContactNote {
+  id: string;
+  date: string;
+  text: string;
+}
+
+export interface ContactRow {
+  id: string;
+  name: string;
+  title: string;
+  organization: string;
+  state: string;
+  influence: "High" | "Medium" | "Low";
+  stage: "New" | "Contacted" | "Engaged" | "Champion" | "Dormant";
+  email: string;
+  phone: string;
+  tags: string;
+  notes: string;
+  nextAction: string;
+  nextActionDate: string;
+  agencies: Agency[];
+  noteLog: ContactNote[];
+}
 
 interface AccountRowProps {
-  contact: Contact;
+  contact: ContactRow;
   isOpen: boolean;
   isDeletePending: boolean;
   isFirstRow: boolean;
   nameInputRef: RefObject<HTMLInputElement>;
+  visibleColumns: Record<ColumnKey, boolean>;
   onToggleExpand: () => void;
-  onUpdateLocal: (patch: Partial<Contact>) => void;
-  onCommitUpdate: (patch: Partial<Contact>) => void;
+  onUpdateLocal: (patch: Partial<ContactRow>) => void;
+  onCommitUpdate: (patch: Partial<ContactRow>) => void;
   onAddNote: (text: string) => void;
   onRequestDelete: () => void;
   onCancelDelete: () => void;
@@ -33,6 +63,7 @@ export default function AccountRow({
   isDeletePending,
   isFirstRow,
   nameInputRef,
+  visibleColumns,
   onToggleExpand,
   onUpdateLocal,
   onCommitUpdate,
@@ -73,33 +104,37 @@ export default function AccountRow({
           )}
         </td>
 
-        {/* Influence — replaces Priority */}
-        <td className="px-3 py-2">
-          <Select
-            value={c.influence}
-            options={INFLUENCES}
-            onChange={(v) => {
-              onUpdateLocal({ influence: v });
-              onCommitUpdate({ influence: v });
-            }}
-            styleMap={INFLUENCE_STYLE}
-          />
-        </td>
+        {/* Influence */}
+        {visibleColumns.influence && (
+          <td className="px-3 py-2">
+            <Select
+              value={c.influence}
+              options={INFLUENCES}
+              onChange={(v) => {
+                onUpdateLocal({ influence: v });
+                onCommitUpdate({ influence: v });
+              }}
+              styleMap={INFLUENCE_STYLE}
+            />
+          </td>
+        )}
 
-        {/* Stage — replaces Status */}
-        <td className="px-3 py-2">
-          <Select
-            value={c.stage}
-            options={STAGES}
-            onChange={(v) => {
-              onUpdateLocal({ stage: v });
-              onCommitUpdate({ stage: v });
-            }}
-            styleMap={STAGE_STYLE}
-          />
-        </td>
+        {/* Stage */}
+        {visibleColumns.stage && (
+          <td className="px-3 py-2">
+            <Select
+              value={c.stage}
+              options={STAGES}
+              onChange={(v) => {
+                onUpdateLocal({ stage: v });
+                onCommitUpdate({ stage: v });
+              }}
+              styleMap={STAGE_STYLE}
+            />
+          </td>
+        )}
 
-        {/* State */}
+        {/* State — always visible (used for filtering) */}
         <td className="px-3 py-2">
           <input
             value={c.state}
@@ -110,29 +145,34 @@ export default function AccountRow({
           />
         </td>
 
-        {/* Agencies — shown as chips, click to expand */}
-        <td className="px-3 py-2">
-          <button
-            onClick={onToggleExpand}
-            className="flex items-center gap-1 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded hover:bg-[var(--panel-2)] whitespace-nowrap transition-colors"
-          >
-            <Building2 size={13} />
-            {c.agencies.length > 0 ? c.agencies.length : "—"}
-          </button>
-        </td>
+        {/* Agencies count */}
+        {visibleColumns.agencies && (
+          <td className="px-3 py-2">
+            <button
+              onClick={onToggleExpand}
+              className="flex items-center gap-1 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded hover:bg-[var(--panel-2)] whitespace-nowrap transition-colors"
+            >
+              <Building2 size={13} />
+              {c.agencies.length > 0 ? c.agencies.length : "—"}
+            </button>
+          </td>
+        )}
 
         {/* Notes count */}
-        <td className="px-3 py-2">
-          <button
-            onClick={onToggleExpand}
-            className="flex items-center gap-1 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded hover:bg-[var(--panel-2)] whitespace-nowrap transition-colors"
-          >
-            <StickyNote size={13} />
-            {c.noteLog.length}
-          </button>
-        </td>
+        {visibleColumns.notes && (
+          <td className="px-3 py-2">
+            <button
+              onClick={onToggleExpand}
+              className="flex items-center gap-1 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded hover:bg-[var(--panel-2)] whitespace-nowrap transition-colors"
+            >
+              <StickyNote size={13} />
+              {c.noteLog.length}
+            </button>
+          </td>
+        )}
 
         {/* Delete */}
+        {visibleColumns.delete && (
         <td className="px-3 py-2 relative">
           <button
             onClick={onRequestDelete}
@@ -168,18 +208,18 @@ export default function AccountRow({
             </div>
           )}
         </td>
+        )}
       </tr>
 
       {/* Expanded detail row */}
       {isOpen && (
         <tr className="border-b border-[var(--line)]">
-          <td colSpan={8} className="p-0">
+          <td colSpan={3 + Object.values(visibleColumns).filter(Boolean).length} className="p-0">
             <div className="px-6 pt-4 pb-2 bg-[var(--bg-2)]">
               <div className="grid grid-cols-2 gap-4 max-w-3xl">
 
                 {/* Left — contact details */}
                 <div className="space-y-3">
-                  {/* Email */}
                   <div>
                     <div
                       className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-1"
@@ -197,7 +237,6 @@ export default function AccountRow({
                     />
                   </div>
 
-                  {/* Phone */}
                   <div>
                     <div
                       className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-1"
@@ -214,7 +253,6 @@ export default function AccountRow({
                     />
                   </div>
 
-                  {/* Next Action */}
                   <div>
                     <div
                       className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-1"
@@ -232,7 +270,7 @@ export default function AccountRow({
                   </div>
                 </div>
 
-                {/* Right — agencies */}
+                {/* Right — linked agencies (clickable if URL exists) */}
                 <div>
                   <div
                     className="text-[10px] uppercase tracking-[0.15em] text-[var(--ink-muted)] font-medium mb-2"
@@ -246,21 +284,55 @@ export default function AccountRow({
                     </p>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
-                      {c.agencies.map((ag, i) => (
-                       
-                        <span
-                          key={i}
-                          className="text-[11px] px-2 py-1 rounded"
-                          style={{
-                            fontFamily: "'JetBrains Mono', monospace",
-                            background: "rgba(244,185,66,0.1)",
-                            border: "1px solid rgba(244,185,66,0.2)",
-                            color: "var(--accent)",
-                          }}
-                        >
-                         {ag.name} {ag.url}
-                        </span>
-                      ))}
+                      {c.agencies.map((ag, i) =>
+                        ag.url ? (
+                          <a
+                            key={i}
+                            href={ag.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              background: "rgba(244,185,66,0.1)",
+                              border: "1px solid rgba(244,185,66,0.25)",
+                              color: "var(--accent)",
+                              textDecoration: "none",
+                              fontSize: "11px",
+                              padding: "3px 8px",
+                              borderRadius: "4px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              transition: "background 0.15s, border-color 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(244,185,66,0.2)";
+                              e.currentTarget.style.borderColor = "var(--accent)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "rgba(244,185,66,0.1)";
+                              e.currentTarget.style.borderColor = "rgba(244,185,66,0.25)";
+                            }}
+                          >
+                            ↗ {ag.name}
+                          </a>
+                        ) : (
+                          <span
+                            key={i}
+                            style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              background: "rgba(244,185,66,0.1)",
+                              border: "1px solid rgba(244,185,66,0.2)",
+                              color: "var(--accent)",
+                              fontSize: "11px",
+                              padding: "3px 8px",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            {ag.name}
+                          </span>
+                        )
+                      )}
                     </div>
                   )}
                 </div>

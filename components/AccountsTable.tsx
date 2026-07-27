@@ -5,6 +5,7 @@ import AccountRow from "./AccountRow";
 import { Contact } from "@/lib/types";
 import ColumnFilterDropdown from "./ColumnFilterDropdown";
 import { INFLUENCES, STAGES } from "@/lib/constants";
+import { ColumnKey } from "./ColumnToggle";
 
 interface ColumnFilters {
   influence: Set<string>;
@@ -19,6 +20,7 @@ interface ContactsTableProps {
   nameInputRef: RefObject<HTMLInputElement>;
   columnFilters: ColumnFilters;
   onColumnFiltersChange: (filters: ColumnFilters) => void;
+  visibleColumns: Record<ColumnKey, boolean>;
   onToggleExpand: (id: string) => void;
   onUpdateLocal: (id: string, patch: Partial<Contact>) => void;
   onCommitUpdate: (id: string, patch: Partial<Contact>) => void;
@@ -35,6 +37,7 @@ export default function ContactsTable({
   nameInputRef,
   columnFilters,
   onColumnFiltersChange,
+  visibleColumns,
   onToggleExpand,
   onUpdateLocal,
   onCommitUpdate,
@@ -64,22 +67,26 @@ export default function ContactsTable({
               <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[220px] text-[var(--ink-dim)]">
                 Name
               </th>
-              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[110px]">
-                <ColumnFilterDropdown
-                  label="Influence"
-                  options={INFLUENCES}
-                  selected={columnFilters.influence}
-                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, influence: s })}
-                />
-              </th>
-              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[130px]">
-                <ColumnFilterDropdown
-                  label="Stage"
-                  options={STAGES}
-                  selected={columnFilters.stage}
-                  onChange={(s) => onColumnFiltersChange({ ...columnFilters, stage: s })}
-                />
-              </th>
+              {visibleColumns.influence && (
+                <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[110px]">
+                  <ColumnFilterDropdown
+                    label="Influence"
+                    options={INFLUENCES}
+                    selected={columnFilters.influence}
+                    onChange={(s) => onColumnFiltersChange({ ...columnFilters, influence: s })}
+                  />
+                </th>
+              )}
+              {visibleColumns.stage && (
+                <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[130px]">
+                  <ColumnFilterDropdown
+                    label="Stage"
+                    options={STAGES}
+                    selected={columnFilters.stage}
+                    onChange={(s) => onColumnFiltersChange({ ...columnFilters, stage: s })}
+                  />
+                </th>
+              )}
               <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[120px]">
                 <ColumnFilterDropdown
                   label="State"
@@ -88,21 +95,27 @@ export default function ContactsTable({
                   onChange={(s) => onColumnFiltersChange({ ...columnFilters, state: s })}
                 />
               </th>
-              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[80px] text-[var(--ink-dim)]">
-                Agencies
-              </th>
-              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[80px] text-[var(--ink-dim)]">
-                Notes
-              </th>
-              <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[60px] text-[var(--ink-dim)]">
-                Delete
-              </th>
+              {visibleColumns.agencies && (
+                <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[80px] text-[var(--ink-dim)]">
+                  Agencies
+                </th>
+              )}
+              {visibleColumns.notes && (
+                <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[80px] text-[var(--ink-dim)]">
+                  Notes
+                </th>
+              )}
+              {visibleColumns.delete && (
+                <th className="text-left px-3 py-2.5 border-b border-[var(--line)] min-w-[60px] text-[var(--ink-dim)]">
+                  Delete
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
             {contacts.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-sm text-[var(--ink-muted)]">
+                <td colSpan={3 + Object.values(visibleColumns).filter(Boolean).length} className="px-4 py-10 text-center text-sm text-[var(--ink-muted)]">
                   No contacts match your search. Try clearing filters or add a new contact.
                 </td>
               </tr>
@@ -116,6 +129,7 @@ export default function ContactsTable({
                 isDeletePending={pendingDeleteId === c.id}
                 isFirstRow={c.id === firstRowId}
                 nameInputRef={nameInputRef}
+                visibleColumns={visibleColumns}
                 onToggleExpand={() => onToggleExpand(c.id)}
                 onUpdateLocal={(patch) => onUpdateLocal(c.id, patch)}
                 onCommitUpdate={(patch) => onCommitUpdate(c.id, patch)}

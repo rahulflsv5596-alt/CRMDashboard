@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import AccountsTable from "./AccountsTable";
 import SummaryBar from "./SummaryBar";
 import Pagination from "./pagination";
+import ColumnToggle, { DEFAULT_VISIBLE, ColumnKey } from "./ColumnToggle";
 
 export type Influence = "High" | "Medium" | "Low";
 export type Stage = "New" | "Contacted" | "Engaged" | "Champion" | "Dormant";
@@ -31,7 +32,7 @@ export interface ContactRow {
   notes: string;
   nextAction: string;
   nextActionDate: string;
- agencies: { name: string; url: string | null }[];
+  agencies: string[];   // agency names from contact_agencies join
   noteLog: ContactNote[];
 }
 
@@ -62,6 +63,8 @@ export default function AgencyCRM({ initialContacts }: AgencyCRMProps) {
     stage: new Set(),
     state: new Set(),
   });
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>(DEFAULT_VISIBLE);
 
   useEffect(() => {
     document.body.classList.add("atlas-theme");
@@ -252,7 +255,8 @@ export default function AgencyCRM({ initialContacts }: AgencyCRMProps) {
           placeholder="Search name, title, organization..."
           className="text-sm bg-[var(--panel)] border border-[var(--line)] text-[var(--ink)] placeholder-[var(--ink-muted)] rounded px-3 py-1.5 w-72 focus:outline-none focus:border-[var(--accent)]"
         />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <ColumnToggle visible={visibleColumns} onChange={setVisibleColumns} />
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -260,13 +264,13 @@ export default function AgencyCRM({ initialContacts }: AgencyCRMProps) {
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
-          <button
+          {/* <button
             onClick={addContact}
             className="flex items-center gap-1.5 bg-[var(--accent)] hover:bg-[var(--accent-2)] transition-colors text-[#1a1200] font-semibold text-sm px-3 py-2 rounded"
           >
             <Plus size={16} strokeWidth={2.5} />
             Add contact
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -277,6 +281,7 @@ export default function AgencyCRM({ initialContacts }: AgencyCRMProps) {
         nameInputRef={nameInputRef}
         columnFilters={columnFilters}
         onColumnFiltersChange={setColumnFilters}
+        visibleColumns={visibleColumns}
         onToggleExpand={toggleExpand}
         onUpdateLocal={updateLocal}
         onCommitUpdate={commitUpdate}
