@@ -1271,7 +1271,7 @@ function closeModal() {
     if(restoreDash){
       //
       restoreDash.addEventListener("click", () => {
-    window.location.href = "http://localhost:3000/dashboard"; // Your Next.js app
+    window.location.href = "https://crm-dashboard-x1ik.vercel.app/dashboard"; // Your Next.js app
 });
     }
     if (restoreBtn && restoreFile) {
