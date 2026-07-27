@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-
+import { Analytics } from '@vercel/analytics/next';
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -151,6 +151,7 @@ export default function LoginPage() {
         >
           {isSignUp ? "Already have an account? Sign in" : "New here? Create an account"}
         </button>
+        <Analytics/>
       </div>
     </div>
   );
