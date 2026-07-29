@@ -9,7 +9,7 @@ import SummaryBar from "./SummaryBar";
 import Pagination from "./pagination";
 import ColumnToggle, { DEFAULT_VISIBLE, ColumnKey } from "./ColumnToggle";
 import { Agency } from "./AccountRow";
-
+import ChatSidebar from "./ChatSidebar";
 export type Influence = "High" | "Medium" | "Low";
 export type Stage = "New" | "Contacted" | "Engaged" | "Champion" | "Dormant";
 
@@ -291,6 +291,7 @@ export default function AgencyCRM({ initialContacts }: AgencyCRMProps) {
         onCancelDelete={() => setPendingDeleteId(null)}
         onConfirmDelete={deleteContact}
       />
+        <ChatSidebar />
     </div>
   );
 }
